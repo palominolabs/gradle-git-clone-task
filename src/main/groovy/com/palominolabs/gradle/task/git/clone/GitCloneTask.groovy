@@ -22,8 +22,6 @@ class GitCloneTask extends DefaultTask {
 
   String knownHostsPath = Paths.get(System.getProperty('user.home'), '.ssh', 'known_hosts').toString()
 
-  boolean cloneAllBranches = true
-
   boolean reset = false
 
   @TaskAction
@@ -53,7 +51,7 @@ class GitCloneTask extends DefaultTask {
           .setDirectory(dir)
           .setNoCheckout(true)
           .setURI(uri)
-          .setCloneAllBranches(cloneAllBranches)
+          .setCloneAllBranches(true)
           .setTransportConfigCallback(new SshAgentTransportConfigCallback(knownHostsPath))
           .call()
     }
