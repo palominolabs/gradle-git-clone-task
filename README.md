@@ -1,8 +1,8 @@
-This project provides a Gradle task to do one thing: have a directory be the contents of a Git repo at a specified treeish. It will clone it if it doesn't exist, check out the specified treeish, and fetch if you change the treeish to something that isn't in the current clone.
+This project provides a Gradle task to do one thing: have a directory be the contents of a Git repo at a specified treeish. It will clone it if it doesn't exist already, check out the specified treeish, and fetch if you change the treeish to something that isn't in the current clone.
 
 # Quick start
 
-Suppose you want the contents of `git@github.com:palominolabs/gradle-git-clone-task-demo-repo.git` to be in `build/some-repo`. Put this in your `build.gradle` and now you have a task that does that:
+Suppose you want the contents of `git@github.com:palominolabs/gradle-git-clone-task-demo-repo.git` to be in `build/some-repo`. Put this in your `build.gradle`:
 
 ```
 buildscript {
@@ -28,8 +28,8 @@ Run `gradle cloneSomeRepo` and presto!
 
 Besides the requried `dir`, `uri`, and `treeish`, there are a few more things you can tweak.
 
-### SSH known hosts
+#### SSH known hosts
 By default, the task configures Jsch to look for your SSH known hosts file in `~/.ssh/known_hosts`. To make it look somewhere else, set `knownHostsPath` to a `String` path.
 
-### Resetting the repo each time the task runs
+#### Resetting the repo each time the task runs
 If you want to do the equivalent of a `git reset --hard`, set `reset` to `true`.
