@@ -1,0 +1,94 @@
+apply plugin: 'groovy'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile gradleApi()
+  compile localGroovy()
+
+  compile 'org.eclipse.jgit:org.eclipse.jgit:3.3.1.201403241930-r'
+
+  compile 'com.jcraft:jsch.agentproxy.jsch:0.0.7'
+  compile 'com.jcraft:jsch.agentproxy.connector-factory:0.0.7'
+
+  testCompile 'junit:junit:4.11'
+}
+
+group = 'com.palominolabs.gradle.plugin'
+version = '0.0.1-SNAPSHOT'
+ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+
+sourceCompatibility = JavaVersion.VERSION_1_7
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+  from sourceSets.main.allJava
+  classifier = 'sources'
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+  from javadoc.destinationDir
+  classifier = 'javadoc'
+}
+
+artifacts {
+  // register in 'archives' config so they will be signed
+  archives sourcesJar
+  archives javadocJar
+}
+
+signing {
+  required { gradle.taskGraph.hasTask("uploadArchives") }
+  sign configurations.archives
+}
+
+uploadArchives {
+  repositories {
+    mavenDeployer {
+      beforeDeployment { deployment -> signing.signPom(deployment) }
+
+      repository(url: isReleaseVersion ?
+          "https://oss.sonatype.org/service/local/staging/deploy/maven2/" :
+          "https://oss.sonatype.org/content/repositories/snapshots/") {
+        def u = project.hasProperty('sonatypeUsername') ? sonatypeUsername : 'FIXME'
+        def p = project.hasProperty('sonatypePassword') ? sonatypePassword : 'FIXME'
+        authentication(userName: u, password: p)
+      }
+
+      pom.project {
+        name 'gradle-git-clone-plugin'
+        packaging 'jar'
+        description 'Easily clone git repos in your Gradle builds'
+        url 'https://github.com/palominolabs/gradle-git-clone-plugin'
+
+        scm {
+          url 'scm:git@github.com:palominolabs/gradle-git-clone-plugin.git'
+          connection 'scm:git@github.com:palominolabs/gradle-git-clone-plugin.git'
+          developerConnection 'scm:git@github.com:palominolabs/gradle-git-clone-plugin.git'
+        }
+
+        licenses {
+          license {
+            name 'The Apache Software License, Version 2.0'
+            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+            distribution 'repo'
+          }
+        }
+
+        developers {
+          developer {
+            id 'marshallpierce'
+            name 'Marshall Pierce'
+          }
+        }
+      }
+    }
+  }
+}
+
+task wrapper(type: Wrapper) << {
+  gradleVersion = '1.11'
+}
