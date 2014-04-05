@@ -6,6 +6,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.fail
+
 final class GitCloneTaskTest {
 
   @Rule
@@ -104,6 +107,20 @@ final class GitCloneTaskTest {
 
     task.setUpRepo()
     assertChangedFileContents("v3")
+  }
+
+  @Test
+  public void testTriesToFetchWhenGivenUnfindableTreeish() {
+    task.treeish = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+    try {
+      task.setUpRepo()
+      fail()
+    } catch (RuntimeException e) {
+      // this is only thrown after trying to fetch. Unfortunately, there isn't a great way to test
+      // that trying again will actually *work*; that would involve making a repo publicly writable
+      // so that everyone running the tests could pass it.
+      assertEquals("Couldn't resolve <xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>", e.getMessage())
+    }
   }
 
   void assertChangedFileContents(String contents) {
