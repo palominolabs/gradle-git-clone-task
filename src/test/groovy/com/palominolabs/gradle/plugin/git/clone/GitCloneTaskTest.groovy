@@ -110,7 +110,7 @@ final class GitCloneTaskTest {
   }
 
   @Test
-  public void testTriesToFetchWhenGivenUnfindableTreeish() {
+  public void testUseUnknownTreeishFails() {
     task.treeish = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
     try {
       task.setUpRepo()
