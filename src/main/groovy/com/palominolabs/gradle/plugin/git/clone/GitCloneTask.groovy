@@ -7,7 +7,6 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.eclipse.jgit.transport.SshSessionFactory
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 
@@ -46,8 +45,6 @@ class GitCloneTask extends DefaultTask {
       dir.mkdirs()
     }
 
-    SshSessionFactory.setInstance(new SshAgentSshSessionFactory(knownHostsPath))
-
     File gitDir = new File(dir, ".git")
 
     if (!gitDir.exists()) {
@@ -57,6 +54,7 @@ class GitCloneTask extends DefaultTask {
           .setNoCheckout(true)
           .setURI(uri)
           .setCloneAllBranches(cloneAllBranches)
+          .setTransportConfigCallback(new SshAgentTransportConfigCallback(knownHostsPath))
           .call()
     }
 
@@ -72,6 +70,7 @@ class GitCloneTask extends DefaultTask {
     if (ref == null) {
       // we may just need to fetch
       git.fetch()
+          .setTransportConfigCallback(new SshAgentTransportConfigCallback(knownHostsPath))
           .call()
 
       ref = repository.resolve(treeish)
