@@ -18,7 +18,7 @@ buildscript {
 task cloneSomeRepo(type: com.palominolabs.gradle.task.git.clone.GitCloneTask) {
   dir = file("$buildDir/some-repo")
   uri = 'git@github.com:palominolabs/gradle-git-clone-task-demo-repo.git'
-  treeish = 'v2' // a git hash, or tag name, or branch name'
+  treeish = 'v2' // a git hash, or tag name, or branch name
 }
 ```
 
