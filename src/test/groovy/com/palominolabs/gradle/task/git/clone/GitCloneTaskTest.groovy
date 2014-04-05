@@ -1,4 +1,4 @@
-package com.palominolabs.gradle.plugin.git.clone
+package com.palominolabs.gradle.task.git.clone
 
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Before
@@ -24,7 +24,7 @@ final class GitCloneTaskTest {
 
     task = ProjectBuilder.builder().build().task('cloneTask', type: GitCloneTask)
     task.dir = dir
-    task.uri = 'https://github.com/palominolabs/gradle-git-clone-plugin-demo-repo.git'
+    task.uri = 'https://github.com/palominolabs/gradle-git-clone-task-demo-repo.git'
     task.treeish = 'b81f11dac85d93566036cb5d31d4e8365752e9f6'
   }
 
@@ -103,7 +103,7 @@ final class GitCloneTaskTest {
 
   @Test
   public void testSshUri() {
-    task.uri = 'git@github.com:palominolabs/gradle-git-clone-plugin-demo-repo.git'
+    task.uri = 'git@github.com:palominolabs/gradle-git-clone-task-demo-repo.git'
 
     task.setUpRepo()
     assertChangedFileContents("v3")

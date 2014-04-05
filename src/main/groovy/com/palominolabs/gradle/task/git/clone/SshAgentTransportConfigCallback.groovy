@@ -1,4 +1,4 @@
-package com.palominolabs.gradle.plugin.git.clone
+package com.palominolabs.gradle.task.git.clone
 
 import org.eclipse.jgit.api.TransportConfigCallback
 import org.eclipse.jgit.transport.Transport

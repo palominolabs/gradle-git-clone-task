@@ -1,4 +1,4 @@
-package com.palominolabs.gradle.plugin.git.clone
+package com.palominolabs.gradle.task.git.clone
 
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.ResetCommand

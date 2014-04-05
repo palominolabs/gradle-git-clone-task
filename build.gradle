@@ -18,7 +18,7 @@ dependencies {
   testCompile 'junit:junit:4.11'
 }
 
-group = 'com.palominolabs.gradle.plugin'
+group = 'com.palominolabs.gradle.task'
 version = '0.0.1-SNAPSHOT'
 ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
@@ -59,15 +59,15 @@ uploadArchives {
       }
 
       pom.project {
-        name 'gradle-git-clone-plugin'
+        name 'gradle-git-clone-task'
         packaging 'jar'
         description 'Easily clone git repos in your Gradle builds'
-        url 'https://github.com/palominolabs/gradle-git-clone-plugin'
+        url 'https://github.com/palominolabs/gradle-git-clone-task'
 
         scm {
-          url 'scm:git@github.com:palominolabs/gradle-git-clone-plugin.git'
-          connection 'scm:git@github.com:palominolabs/gradle-git-clone-plugin.git'
-          developerConnection 'scm:git@github.com:palominolabs/gradle-git-clone-plugin.git'
+          url 'scm:git@github.com:palominolabs/gradle-git-clone-task.git'
+          connection 'scm:git@github.com:palominolabs/gradle-git-clone-task.git'
+          developerConnection 'scm:git@github.com:palominolabs/gradle-git-clone-task.git'
         }
 
         licenses {

@@ -1,4 +1,4 @@
-package com.palominolabs.gradle.plugin.git.clone
+package com.palominolabs.gradle.task.git.clone
 
 import com.jcraft.jsch.IdentityRepository
 import com.jcraft.jsch.JSch
