@@ -19,7 +19,7 @@ dependencies {
 }
 
 group = 'com.palominolabs.gradle.task'
-version = '0.0.2'
+version = '0.0.3-SNAPSHOT'
 ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
 sourceCompatibility = JavaVersion.VERSION_1_7
