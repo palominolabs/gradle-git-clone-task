@@ -1,20 +1,24 @@
 package com.palominolabs.gradle.task.git.clone
 
-import jnr.posix.POSIX
-import jnr.posix.POSIXFactory
+import com.jcraft.jsch.JSchException
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
 import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertTrue
 import static org.junit.Assert.fail
 
 final class GitCloneTaskTest {
 
   public static final String SSH_REPO_URI = 'git@github.com:palominolabs/gradle-git-clone-task-demo-repo.git'
+  private static String PRIV_KEY_PATH = new File('.').canonicalFile.toPath().resolve("src/test/resources/id_rsa").
+      toString()
+
   @Rule
   public TemporaryFolder tmp = new TemporaryFolder();
 
@@ -30,6 +34,9 @@ final class GitCloneTaskTest {
     task.dir = dir
     task.uri = 'https://github.com/palominolabs/gradle-git-clone-task-demo-repo.git'
     task.treeish = 'b81f11dac85d93566036cb5d31d4e8365752e9f6'
+
+    // don't accidentally use a private key
+    task.sshIdentityPrivKeyPath = 'no-such-key'
   }
 
   @Test
@@ -130,37 +137,86 @@ final class GitCloneTaskTest {
   public void testUsePrivKeyFile() {
     task.uri = SSH_REPO_URI
     task.trySshAgent = false
-    task.sshIdentityPrivKeyPath = new File('.').canonicalFile.toPath().resolve("src/test/resources/id_rsa").toString()
+    task.sshIdentityPrivKeyPath = PRIV_KEY_PATH
 
     task.setUpRepo()
     assertChangedFileContents("v3")
   }
 
   @Test
-  @Ignore
   public void testFallBackToIdentityIfSshAgentNotFound() {
     task.uri = SSH_REPO_URI
+    task.sshIdentityPrivKeyPath = PRIV_KEY_PATH
 
-    Map<String, String> env = System.getenv()
-    String envVar = 'SSH_AUTH_SOCK'
-    String origValue = env.get(envVar)
-
-    POSIX posix = POSIXFactory.getPOSIX()
-    if (origValue != null) {
-      posix.unsetenv(envVar)
-    }
+    def origEnv = unsetSshAgentEnvVar()
 
     try {
-      task.sshIdentityPrivKeyPath = '/foo/bar'
-
       task.setUpRepo()
     } finally {
-      if (origValue != null) {
-        posix.setenv(envVar, origValue, 1)
+      if (origEnv != null) {
+        setEnv(origEnv)
       }
     }
 
     assertChangedFileContents("v3")
+  }
+
+  @Test
+  public void testFailsWhenCantLoadSshAgentAndKeyPathIsBad() {
+    task.uri = SSH_REPO_URI
+    task.sshIdentityPrivKeyPath = 'foo/bar'
+
+    def origEnv = unsetSshAgentEnvVar()
+
+    try {
+      task.setUpRepo()
+      fail()
+    } catch (JSchException e) {
+      def cause = e.getCause()
+      assertTrue(cause instanceof FileNotFoundException)
+      assertEquals("foo/bar (No such file or directory)", cause.getMessage())
+    } finally {
+      if (origEnv != null) {
+        setEnv(origEnv)
+      }
+    }
+  }
+
+  /**
+   * @return null if env var wasn't found (and nothing was modified), or returns the original env var map for later
+   * resetting
+   */
+  private Map<String, String> unsetSshAgentEnvVar() {
+    Map<String, String> origEnv = System.getenv()
+    Map<String, String> modifiedEnv = new HashMap<>(origEnv)
+
+    String origValue = modifiedEnv.remove('SSH_AUTH_SOCK')
+
+    // env map never has null values, so null implies not set
+    if (origValue == null) {
+      return null;
+    }
+
+    modifiedEnv = Collections.unmodifiableMap(modifiedEnv)
+    setEnv(modifiedEnv)
+
+    return origEnv;
+  }
+
+  private void setEnv(Map<String, String> env) {
+    // getenv() is cached so we can't use posix setenv() to change it; we have to get dirty.
+    // I hate being part of the problem.
+
+    Class<?> klass = Class.forName("java.lang.ProcessEnvironment")
+    Field field = klass.getDeclaredField("theUnmodifiableEnvironment")
+
+    field.setAccessible(true)
+
+    Field modifiersField = Field.class.getDeclaredField("modifiers");
+    modifiersField.setAccessible(true);
+    modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+
+    field.set(null, env)
   }
 
   void assertChangedFileContents(String contents) {
