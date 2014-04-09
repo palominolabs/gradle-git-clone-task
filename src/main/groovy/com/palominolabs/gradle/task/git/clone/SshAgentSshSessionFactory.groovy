@@ -42,7 +42,7 @@ class SshAgentSshSessionFactory extends SshSessionFactory {
       try {
         connector = cf.createConnector()
       } catch (AgentProxyException e) {
-        logger.info("Couldn't load agent connector", e)
+        logger.debug("Couldn't load agent connector", e)
       }
     }
 
