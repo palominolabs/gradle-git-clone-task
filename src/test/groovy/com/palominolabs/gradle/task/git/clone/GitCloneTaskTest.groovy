@@ -1,7 +1,10 @@
 package com.palominolabs.gradle.task.git.clone
 
+import jnr.posix.POSIX
+import jnr.posix.POSIXFactory
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -11,6 +14,7 @@ import static org.junit.Assert.fail
 
 final class GitCloneTaskTest {
 
+  public static final String SSH_REPO_URI = 'git@github.com:palominolabs/gradle-git-clone-task-demo-repo.git'
   @Rule
   public TemporaryFolder tmp = new TemporaryFolder();
 
@@ -45,7 +49,6 @@ final class GitCloneTaskTest {
 
   @Test
   public void testCleansUpDirtyFilesIfRequested() {
-
     task.reset = true
     task.setUpRepo()
 
@@ -103,7 +106,7 @@ final class GitCloneTaskTest {
 
   @Test
   public void testSshUri() {
-    task.uri = 'git@github.com:palominolabs/gradle-git-clone-task-demo-repo.git'
+    task.uri = SSH_REPO_URI
 
     task.setUpRepo()
     assertChangedFileContents("v3")
@@ -121,6 +124,43 @@ final class GitCloneTaskTest {
       // so that everyone running the tests could pass it.
       assertEquals("Couldn't resolve <xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>", e.getMessage())
     }
+  }
+
+  @Test
+  public void testUsePrivKeyFile() {
+    task.uri = SSH_REPO_URI
+    task.trySshAgent = false
+    task.sshIdentityPrivKeyPath = new File('.').canonicalFile.toPath().resolve("src/test/resources/id_rsa").toString()
+
+    task.setUpRepo()
+    assertChangedFileContents("v3")
+  }
+
+  @Test
+  @Ignore
+  public void testFallBackToIdentityIfSshAgentNotFound() {
+    task.uri = SSH_REPO_URI
+
+    Map<String, String> env = System.getenv()
+    String envVar = 'SSH_AUTH_SOCK'
+    String origValue = env.get(envVar)
+
+    POSIX posix = POSIXFactory.getPOSIX()
+    if (origValue != null) {
+      posix.unsetenv(envVar)
+    }
+
+    try {
+      task.sshIdentityPrivKeyPath = '/foo/bar'
+
+      task.setUpRepo()
+    } finally {
+      if (origValue != null) {
+        posix.setenv(envVar, origValue, 1)
+      }
+    }
+
+    assertChangedFileContents("v3")
   }
 
   void assertChangedFileContents(String contents) {

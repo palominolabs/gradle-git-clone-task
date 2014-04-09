@@ -1,7 +1,9 @@
 package com.palominolabs.gradle.task.git.clone
 
+import java.nio.file.Paths
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.ResetCommand
+import org.eclipse.jgit.api.TransportConfigCallback
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
@@ -10,18 +12,41 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 
-import java.nio.file.Paths
-
 class GitCloneTask extends DefaultTask {
 
+  /**
+   * Dir to clone into
+   */
   File dir
 
+  /**
+   * Uri of repo to clone from
+   */
   String uri
 
+  /**
+   * Treeish to checkout in clone
+   */
   String treeish
 
+  /**
+   * Known hosts path to use when ssh'ing
+   */
   String knownHostsPath = Paths.get(System.getProperty('user.home'), '.ssh', 'known_hosts').toString()
 
+  /**
+   * Try loading ssh identities from ssh-agent. Will fall back to ssh identity if ssh-agent not available.
+   */
+  boolean trySshAgent = true
+
+  /**
+   * Path to (unencrypted) private key to try if ssh-agent can't be found
+   */
+  String sshIdentityPrivKeyPath = Paths.get(System.getProperty('user.home'), '.ssh', 'id_rsa').toString()
+
+  /**
+   * Do a reset --hard when checking out
+   */
   boolean reset = false
 
   @TaskAction
@@ -39,11 +64,18 @@ class GitCloneTask extends DefaultTask {
       throw new NullPointerException("Must specify treeish")
     }
 
+    if (!trySshAgent && !(new File(sshIdentityPrivKeyPath).canRead())) {
+      throw new IllegalArgumentException("ssh-agent disabled, and ssh priv key $sshIdentityPrivKeyPath not readable")
+    }
+
     if (!dir.exists()) {
       dir.mkdirs()
     }
 
     File gitDir = new File(dir, ".git")
+
+    TransportConfigCallback configCallback = new SshAgentTransportConfigCallback(knownHostsPath, trySshAgent,
+        sshIdentityPrivKeyPath)
 
     if (!gitDir.exists()) {
       // no git dir there yet; clone it
@@ -52,7 +84,7 @@ class GitCloneTask extends DefaultTask {
           .setNoCheckout(true)
           .setURI(uri)
           .setCloneAllBranches(true)
-          .setTransportConfigCallback(new SshAgentTransportConfigCallback(knownHostsPath))
+          .setTransportConfigCallback(configCallback)
           .call()
     }
 
@@ -68,7 +100,7 @@ class GitCloneTask extends DefaultTask {
     if (ref == null) {
       // we may just need to fetch
       git.fetch()
-          .setTransportConfigCallback(new SshAgentTransportConfigCallback(knownHostsPath))
+          .setTransportConfigCallback(configCallback)
           .call()
 
       ref = repository.resolve(treeish)

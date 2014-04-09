@@ -16,6 +16,7 @@ dependencies {
   compile 'com.jcraft:jsch.agentproxy.connector-factory:0.0.7'
 
   testCompile 'junit:junit:4.11'
+  testCompile 'com.github.jnr:jnr-posix:3.0.1'
 }
 
 group = 'com.palominolabs.gradle.task'
