@@ -11,7 +11,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.palominolabs.gradle.task:gradle-git-clone-task:0.0.1'
+    classpath 'com.palominolabs.gradle.task:gradle-git-clone-task:0.0.2'
   }
 }
 
