@@ -55,8 +55,6 @@ class SshAgentSshSessionFactory extends SshSessionFactory {
       jsch.addIdentity(identityPrivKeyPath)
     }
 
-
-
     jsch.setConfig("PreferredAuthentications", "publickey");
     jsch.setKnownHosts(knownHostsPath)
 
