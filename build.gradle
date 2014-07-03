@@ -89,6 +89,6 @@ uploadArchives {
   }
 }
 
-task wrapper(type: Wrapper) << {
-  gradleVersion = '1.11'
+task wrapper(type: Wrapper) {
+  gradleVersion = '2.0'
 }
