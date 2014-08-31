@@ -49,6 +49,11 @@ class GitCloneTask extends DefaultTask {
    */
   boolean reset = false
 
+  /**
+   * Set to false to allow connecting to SSH hosts that don't have an entry in knownHostsPath
+   */
+  boolean strictHostKeyChecking = true
+
   @TaskAction
   def setUpRepo() {
 
@@ -75,7 +80,7 @@ class GitCloneTask extends DefaultTask {
     File gitDir = new File(dir, ".git")
 
     TransportConfigCallback configCallback = new SshAgentTransportConfigCallback(knownHostsPath, trySshAgent,
-        sshIdentityPrivKeyPath)
+        sshIdentityPrivKeyPath, strictHostKeyChecking)
 
     if (!gitDir.exists()) {
       // no git dir there yet; clone it

@@ -25,10 +25,15 @@ class SshAgentSshSessionFactory extends SshSessionFactory {
 
   private final String identityPrivKeyPath
 
-  SshAgentSshSessionFactory(String knownHostsPath, boolean trySshAgent, String identityPrivKeyPath) {
+  private final boolean strictHostKeyChecking
+
+
+  SshAgentSshSessionFactory(String knownHostsPath, boolean trySshAgent, String identityPrivKeyPath,
+                            boolean strictHostKeyChecking) {
     this.knownHostsPath = knownHostsPath
     this.trySshAgent = trySshAgent
     this.identityPrivKeyPath = identityPrivKeyPath
+    this.strictHostKeyChecking = strictHostKeyChecking
   }
 
   @Override
@@ -55,10 +60,15 @@ class SshAgentSshSessionFactory extends SshSessionFactory {
       jsch.addIdentity(identityPrivKeyPath)
     }
 
-    jsch.setConfig("PreferredAuthentications", "publickey");
+    jsch.setConfig('PreferredAuthentications', 'publickey');
     jsch.setKnownHosts(knownHostsPath)
 
     Session session = jsch.getSession(uri.getUser(), uri.getHost())
+
+    if (!strictHostKeyChecking) {
+      session.setConfig('StrictHostKeyChecking', 'no');
+    }
+
     session.connect()
 
     return new JschSession(session, uri)

@@ -35,6 +35,10 @@ final class GitCloneTaskTest {
     task.uri = 'https://github.com/palominolabs/gradle-git-clone-task-demo-repo.git'
     task.treeish = 'b81f11dac85d93566036cb5d31d4e8365752e9f6'
 
+    // can't count on CI having github's host key
+    task.knownHostsPath = '/dev/null'
+    task.strictHostKeyChecking = false
+
     // don't accidentally use a private key
     task.sshIdentityPrivKeyPath = 'no-such-key'
   }

@@ -9,18 +9,22 @@ final class SshAgentTransportConfigCallback implements TransportConfigCallback {
   private final String knownHostsPath
   private final boolean trySshAgent
   private final String identityPrivKeyPath
+  private final boolean strictHostKeyChecking
 
-  SshAgentTransportConfigCallback(String knownHostsPath, boolean trySshAgent, String identityPrivKeyPath) {
+  SshAgentTransportConfigCallback(String knownHostsPath, boolean trySshAgent, String identityPrivKeyPath,
+                                  boolean strictHostKeyChecking) {
     this.knownHostsPath = knownHostsPath
     this.trySshAgent = trySshAgent
     this.identityPrivKeyPath = identityPrivKeyPath
+    this.strictHostKeyChecking = strictHostKeyChecking
   }
 
   @Override
   public void configure(Transport transport) {
     if (transport instanceof TransportGitSsh) {
       ((TransportGitSsh) transport).
-          setSshSessionFactory(new SshAgentSshSessionFactory(knownHostsPath, trySshAgent, identityPrivKeyPath))
+          setSshSessionFactory(new SshAgentSshSessionFactory(knownHostsPath, trySshAgent, identityPrivKeyPath,
+              strictHostKeyChecking))
     }
   }
 }
