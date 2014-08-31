@@ -116,7 +116,12 @@ final class GitCloneTaskTest {
   }
 
   @Test
-  public void testSshUri() {
+  public void testSshUriWithAgent() {
+    if (System.getenv('SSH_AUTH_SOCK') == null) {
+      System.err.println "No ssh agent found; skipping test"
+      return
+    }
+
     task.uri = SSH_REPO_URI
 
     task.setUpRepo()
