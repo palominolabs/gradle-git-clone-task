@@ -117,7 +117,7 @@ final class GitCloneTaskTest {
 
   @Test
   public void testSshUriWithAgent() {
-    if (System.getenv('SSH_AUTH_SOCK') == null) {
+    if (System.getenv('SSH_AUTH_SOCK') == null || 'true'.equals(System.getenv('CI'))) {
       System.err.println "No ssh agent found; skipping test"
       return
     }
