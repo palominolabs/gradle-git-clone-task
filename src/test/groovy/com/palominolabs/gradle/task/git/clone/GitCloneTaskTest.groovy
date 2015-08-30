@@ -51,6 +51,15 @@ final class GitCloneTaskTest {
   }
 
   @Test
+  public void testClonesIntoExistingDirWithPortInHttpsUri() {
+    task.uri = 'https://github.com:443/palominolabs/gradle-git-clone-task-demo-repo.git'
+
+    task.setUpRepo()
+
+    assertChangedFileContents("v3")
+  }
+
+  @Test
   public void testCreatesDirAndClones() {
     task.dir = new File(dir, "subdir")
     task.setUpRepo()
@@ -123,6 +132,19 @@ final class GitCloneTaskTest {
     }
 
     task.uri = SSH_REPO_URI
+
+    task.setUpRepo()
+    assertChangedFileContents("v3")
+  }
+
+  @Test
+  public void testSshUriWithAgentAndPort() {
+    if (System.getenv('SSH_AUTH_SOCK') == null || 'true'.equals(System.getenv('CI'))) {
+      System.err.println "No ssh agent found; skipping test"
+      return
+    }
+
+    task.uri = 'ssh://git@github.com:22/palominolabs/gradle-git-clone-task-demo-repo.git'
 
     task.setUpRepo()
     assertChangedFileContents("v3")
