@@ -7,7 +7,7 @@ Suppose you want the contents of `git@github.com:palominolabs/gradle-git-clone-t
 ```
 buildscript {
   repositories {
-    mavenCentral()
+    jcenter()
   }
 
   dependencies {
@@ -15,6 +15,7 @@ buildscript {
   }
 }
 
+// use any task name you like
 task cloneSomeRepo(type: com.palominolabs.gradle.task.git.clone.GitCloneTask) {
   dir = file("$buildDir/some-repo")
   uri = 'git@github.com:palominolabs/gradle-git-clone-task-demo-repo.git'
@@ -39,3 +40,6 @@ By default, the task configures Jsch to look for your SSH known hosts file in `~
 
 #### Resetting the repo each time the task runs
 If you want to do the equivalent of a `git reset --hard`, set `reset` to `true`.
+
+#### HTTP Authentication
+HTTP authentication isn't supported because so far SSH auth has always been able to do the job. HTTP also lacks an obvious one-stop auth config solution like "just use ssh private keys".
