@@ -41,5 +41,8 @@ By default, the task configures Jsch to look for your SSH known hosts file in `~
 #### Resetting the repo each time the task runs
 If you want to do the equivalent of a `git reset --hard`, set `reset` to `true`.
 
+#### Forcing a fetch
+If you want to resolve a branch name against a remote each time the task runs rather than caching the result of previous runs, set `forceFetch` to `true`.
+
 #### HTTP Authentication
 HTTP authentication isn't supported because so far SSH auth has always been able to do the job. HTTP also lacks an obvious one-stop auth config solution like "just use ssh private keys".
