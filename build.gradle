@@ -6,18 +6,17 @@ repositories {
   jcenter()
 }
 
-ext.deps = [jsch: '0.0.9']
-
 defaultTasks 'build'
 
 dependencies {
   compile gradleApi()
   compile localGroovy()
 
-  compile 'org.eclipse.jgit:org.eclipse.jgit:3.7.0.201502260915-r'
+  compile 'org.eclipse.jgit:org.eclipse.jgit:4.4.1.201607150455-r'
 
-  compile "com.jcraft:jsch.agentproxy.jsch:${deps.jsch}"
-  compile "com.jcraft:jsch.agentproxy.connector-factory:${deps.jsch}"
+  compile "com.jcraft:jsch:0.1.53"
+  compile 'com.jcraft:jsch.agentproxy.connector-factory:0.0.9'
+  compile 'com.jcraft:jsch.agentproxy.jsch:0.0.9'
 
   testCompile 'junit:junit:4.12'
 }
@@ -91,8 +90,4 @@ uploadArchives {
       }
     }
   }
-}
-
-task wrapper(type: Wrapper) {
-  gradleVersion = '2.11'
 }

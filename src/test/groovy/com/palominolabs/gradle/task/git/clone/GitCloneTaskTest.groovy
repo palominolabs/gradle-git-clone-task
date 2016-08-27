@@ -3,6 +3,16 @@ package com.palominolabs.gradle.task.git.clone
 import com.jcraft.jsch.JSchException
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
+import java.nio.file.Paths
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.ResetCommand
+import org.eclipse.jgit.api.TransportConfigCallback
+import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.revwalk.RevWalk
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.transport.RefSpec
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Before
 import org.junit.Rule
@@ -144,7 +154,7 @@ final class GitCloneTaskTest {
       return
     }
 
-    task.uri = 'ssh://git@github.com:22/palominolabs/gradle-git-clone-task-demo-repo.git'
+    task.uri = SSH_REPO_URI
 
     task.setUpRepo()
     assertChangedFileContents("v3")
@@ -213,6 +223,89 @@ final class GitCloneTaskTest {
     }
   }
 
+  @Test
+  public void testUpdatesForRemoteBranchTreeishChange() {
+    task.setUpRepo()
+    assertChangedFileContents("v3")
+
+    // set up another clone
+    File otherClone = tmp.newFolder()
+    GitCloneTask otherTask = ProjectBuilder.builder().build().task('otherTask', type: GitCloneTask)
+    otherTask.dir = otherClone
+    otherTask.uri = SSH_REPO_URI
+    otherTask.treeish = 'b81f11dac85d93566036cb5d31d4e8365752e9f6'
+
+    // can't count on CI having github's host key
+    otherTask.knownHostsPath = Paths.get(System.getProperty('user.home'), '.ssh', 'known_hosts').toString()
+    otherTask.setUpRepo()
+    assertChangedFileContents(otherTask, "v3")
+
+    // create a remote branch
+    String branchName = "testrun-tmp-branch/" + UUID.randomUUID()
+
+    FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder()
+        .setGitDir(new File(otherTask.dir, ".git"))
+        .readEnvironment()
+    Repository repository = repositoryBuilder.build()
+    Git git = new Git(repository)
+
+    ObjectId id = repository.resolve("refs/tags/v2")
+    RevCommit commit = new RevWalk(repository).parseCommit(id)
+
+
+    // replicate some guts of the task so ssh agent will work
+    TransportConfigCallback configCallback = new SshAgentTransportConfigCallback(
+        otherTask.knownHostsPath,
+        true,
+        '/dev/null',
+        true)
+
+    git.branchCreate()
+        .setName(branchName)
+        .setStartPoint(commit)
+        .call()
+    git.checkout()
+        .setName(branchName)
+        .call()
+    git.push()
+        .setRemote("origin")
+        .setRefSpecs(new RefSpec("$branchName:$branchName"))
+        .setTransportConfigCallback(configCallback)
+        .call()
+
+    task.treeish = "origin/$branchName"
+    task.setUpRepo()
+    assertChangedFileContents("v2")
+
+    // move the local branch forward
+    git.reset()
+        .setMode(ResetCommand.ResetType.HARD)
+        .setRef("refs/tags/v3")
+        .call()
+    // push
+    git.push()
+        .setRemote("origin")
+        .setRefSpecs(new RefSpec("$branchName:$branchName"))
+        .setTransportConfigCallback(configCallback)
+        .call()
+
+    // already has branch, won't see update
+    task.setUpRepo()
+    assertChangedFileContents("v2")
+
+    // force fetch
+    task.forceFetch = true
+    task.setUpRepo()
+    assertChangedFileContents("v3")
+
+    // delete the remote branch
+    git.push()
+        .setRemote("origin")
+        .setRefSpecs(new RefSpec().setSourceDestination(null, "refs/heads/$branchName"))
+        .setTransportConfigCallback(configCallback)
+        .call()
+  }
+
   /**
    * @return null if env var wasn't found (and nothing was modified), or returns the original env var map for later
    * resetting
@@ -251,6 +344,10 @@ final class GitCloneTaskTest {
   }
 
   void assertChangedFileContents(String contents) {
+    assertChangedFileContents(task, contents)
+  }
+
+  void assertChangedFileContents(GitCloneTask task, String contents) {
     assertFileContents(new File(task.dir, "file1"), contents)
   }
 

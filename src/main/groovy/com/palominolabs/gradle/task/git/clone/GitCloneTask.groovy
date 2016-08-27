@@ -54,6 +54,12 @@ class GitCloneTask extends DefaultTask {
    */
   boolean strictHostKeyChecking = true
 
+  /**
+   * Force a fetch even if the treeish could be resolved without a fetch. This is useful to do the equivalent of a
+   * 'git pull': fetching will cause a branch ref like 'origin/master' to point to the latest state in the remote.
+   */
+  boolean forceFetch = false
+
   @TaskAction
   def setUpRepo() {
 
@@ -98,35 +104,43 @@ class GitCloneTask extends DefaultTask {
         .readEnvironment()
 
     Repository repository = repositoryBuilder.build()
-    Git git = new Git(repository)
+    try {
+      Git git = new Git(repository)
+      try {
 
-    ObjectId ref = repository.resolve(treeish)
+        ObjectId ref = repository.resolve(treeish)
 
-    if (ref == null) {
-      // we may just need to fetch
-      git.fetch()
-          .setTransportConfigCallback(configCallback)
-          .call()
+        if (ref == null || forceFetch) {
+          // we may just need to fetch
+          git.fetch()
+              .setTransportConfigCallback(configCallback)
+              .call()
 
-      ref = repository.resolve(treeish)
+          ref = repository.resolve(treeish)
 
-      if (ref == null) {
-        throw new RuntimeException("Couldn't resolve <$treeish>")
+          if (ref == null) {
+            throw new RuntimeException("Couldn't resolve <$treeish>")
+          }
+        }
+
+        RevCommit revCommit = new RevWalk(repository).parseCommit(ref)
+
+        git.checkout()
+            .setAllPaths(true)
+            .setStartPoint(revCommit)
+            .call()
+
+        if (reset) {
+          git.reset()
+              .setMode(ResetCommand.ResetType.HARD)
+              .setRef(treeish)
+              .call()
+        }
+      } finally {
+        git.close()
       }
-    }
-
-    RevCommit revCommit = new RevWalk(repository).parseCommit(ref)
-
-    git.checkout()
-        .setAllPaths(true)
-        .setStartPoint(revCommit)
-        .call()
-
-    if (reset) {
-      git.reset()
-          .setMode(ResetCommand.ResetType.HARD)
-          .setRef(treeish)
-          .call()
+    } finally {
+      repository.close()
     }
   }
 }
