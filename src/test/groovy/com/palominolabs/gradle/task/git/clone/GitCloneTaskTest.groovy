@@ -223,6 +223,7 @@ final class GitCloneTaskTest {
     }
   }
 
+  // This will only pass if you have write access to the demo repo. Sorry.
   @Test
   public void testUpdatesForRemoteBranchTreeishChange() {
     task.setUpRepo()
